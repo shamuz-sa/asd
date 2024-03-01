@@ -6,8 +6,8 @@ from models import Task
 
 router = APIRouter()
 
-tasks: List[Task] = []
-priority_stack: List[Task] = []
+tasks: List[Task] = []  # declaration de la liste des taches
+priority_stack: List[Task] = []  # declaration de la liste des tache par priorité
 task_counter = 1  # Utilisé pour attribuer des identifiants uniques aux tâches
 
 
@@ -25,10 +25,10 @@ async def create_task(task: Task):
 
 def push_task_by_priority(task: Task):
     """
-    Ajoute une tâche à la pile en fonction de sa priorité.
+    add une tâche à la pile en function de sa priority.
     """
     priority_stack.append(task)
-    priority_stack.sort(key=lambda x: x.priority, reverse=False) # reverse false: ordre croissant
+    priority_stack.sort(key=lambda x: x.priority, reverse=False)  # reverse false: ordre croissant
 
 
 @router.get("/tasks/priority", response_model=List[Task])
