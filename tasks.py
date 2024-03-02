@@ -1,34 +1,57 @@
 from typing import List, Optional
-
 from fastapi import APIRouter, HTTPException
-
 from models import Task
+from queue import LifoQueue, PriorityQueue
 
 router = APIRouter()
 
 tasks: List[Task] = []  # declaration de la liste des taches
-priority_stack: List[Task] = []  # declaration de la liste des tache par priorité
+priority_stack: LifoQueue[Task] = LifoQueue()  # declaration de la pile des taches par priorité
 task_counter = 1  # Utilisé pour attribuer des identifiants uniques aux tâches
+priority_queue = PriorityQueue() # declaration de la file des taches par date en priorité
 
 
 @router.post("/add_tasks/")
 async def create_task(task: Task):
+    """
+    Creation d'une nouvelle tache
+    """
     global task_counter  # Utilisation de la variable globale task_counter
 
     # Attribution d'un identifiant unique à la tâche
     task.task_id = task_counter
     task_counter += 1
     tasks.append(task)  # Ajout de la tâche à la liste des tâches
-    push_task_by_priority(task)
+    push_task_by_priority(task) # par priorite
+    push_task_by_priority_queue(task) # par date proche en priorité
     return task  # Retourne la tâche créée
+
+
+def push_task_by_priority_queue(task: Task):
+    priority_queue.put((task.due_date, task))
+   # priority_queue.queue.sort(task.due_date)
+
+
+@router.get("/tasks/priority_queue", response_model=List[Task])
+async def get_priority_tasks():
+    """
+    Récupère les tâches organisées par date la plus proche
+    """
+    elements = []
+    while not priority_queue.empty():
+        elements.append(priority_queue.get()[1])
+
+
+    #return list(priority_queue.queue)
+    return elements
 
 
 def push_task_by_priority(task: Task):
     """
-    add une tâche à la pile en function de sa priority.
+    Ajouter un task à la pile par ordre croissant de priority 0 1 2 3
     """
-    priority_stack.append(task)
-    priority_stack.sort(key=lambda x: x.priority, reverse=False)  # reverse false: ordre croissant
+    priority_stack.put(task)  # Utilisation de put() pour ajouter à la pile
+    priority_stack.queue.sort(key=lambda x: x.priority, reverse=True)  # reverse = True par ordre decroissant
 
 
 @router.get("/tasks/priority", response_model=List[Task])
@@ -36,7 +59,7 @@ async def get_priority_tasks():
     """
     Récupère les tâches organisées par ordre de priorité.
     """
-    return priority_stack
+    return list(priority_stack.queue)
 
 
 def remove_task_from_priority_stack(task: Task):
@@ -61,12 +84,15 @@ def find_task_index(task_id: int) -> Optional[int]:
 
 @router.get("/get_tasks/")
 async def get_tasks():
+    """ Recuperer la liste des tasks"""
     print(tasks)
     return tasks
 
 
 @router.put("/up_tasks/{task_id}")
 async def update_task(task_id: int, updated_task: Task):
+    """ Mise à jour d'une tâche"""
+
     if 0 <= task_id < len(tasks):
         tasks[task_id] = updated_task
         return {"message": "Task updated successfully"}
@@ -75,6 +101,7 @@ async def update_task(task_id: int, updated_task: Task):
 
 @router.put("/tasks/{task_id}")
 async def update_task(task_id: int, updated_task: Task):
+    """ Mise à jour d'une tâche(meilleur version selon moi)"""
     # Find the task by ID
     for i, task in enumerate(tasks):
         if task.task_id == task_id:
