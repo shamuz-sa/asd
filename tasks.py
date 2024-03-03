@@ -8,7 +8,7 @@ router = APIRouter()
 tasks: List[Task] = []  # declaration de la liste des taches
 priority_stack: LifoQueue[Task] = LifoQueue()  # declaration de la pile des taches par priorité
 task_counter = 1  # Utilisé pour attribuer des identifiants uniques aux tâches
-priority_queue = PriorityQueue() # declaration de la file des taches par date en priorité
+priority_queue = PriorityQueue()  # declaration de la file des taches par date en priorité
 
 
 @router.post("/add_tasks/")
@@ -22,36 +22,47 @@ async def create_task(task: Task):
     task.task_id = task_counter
     task_counter += 1
     tasks.append(task)  # Ajout de la tâche à la liste des tâches
-    push_task_by_priority(task) # par priorite
-    push_task_by_priority_queue(task) # par date proche en priorité
+    push_task_by_priority_stack(task)  # par priorite
+    push_task_by_priority_queue(task)  # par date proche en priorité
     return task  # Retourne la tâche créée
 
 
 def push_task_by_priority_queue(task: Task):
     priority_queue.put((task.due_date, task))
-   # priority_queue.queue.sort(task.due_date)
 
 
 @router.get("/tasks/priority_queue", response_model=List[Task])
-async def get_priority_tasks():
+async def get_priority_queue():
     """
     Récupère les tâches organisées par date la plus proche
     """
     elements = []
     while not priority_queue.empty():
-        elements.append(priority_queue.get()[1])
+        elements.append(priority_queue.get()[1]) # pour add seulement l'objet task de la tuple
 
-
-    #return list(priority_queue.queue)
+    # return list(priority_queue.queue)
     return elements
 
 
-def push_task_by_priority(task: Task):
+def push_task_by_priority_stack(task: Task):
     """
     Ajouter un task à la pile par ordre croissant de priority 0 1 2 3
     """
     priority_stack.put(task)  # Utilisation de put() pour ajouter à la pile
     priority_stack.queue.sort(key=lambda x: x.priority, reverse=True)  # reverse = True par ordre decroissant
+
+
+def update_stack_queue():
+    """Mise a jour d'une pile apres modification
+     sur une tache dans la liste des taches"""
+    priority_stack.queue.clear()  # vider la pile et la reremplir ensuite
+    for task in tasks:
+        push_task_by_priority_stack(task)
+
+    # vider la file et la reremplir ensuite
+    priority_queue.queue.clear()
+    for task in tasks:
+        push_task_by_priority_queue(task)
 
 
 @router.get("/tasks/priority", response_model=List[Task])
@@ -62,12 +73,13 @@ async def get_priority_tasks():
     return list(priority_stack.queue)
 
 
-def remove_task_from_priority_stack(task: Task):
+def remove_task_from_priority_stack(task: Task, stack: List[Task]):
     """
     Supprime une tâche de la pile en fonction de sa priorité.
     """
-    priority_stack.remove(task)
-    priority_stack.sort(key=lambda x: x.priority, reverse=True)
+    if task in priority_stack:
+        stack.remove(task)
+        stack.sort(key=lambda x: x.priority, reverse=True)
 
 
 def find_task_index(task_id: int) -> Optional[int]:
@@ -121,6 +133,7 @@ async def delete_task(task_id: int):
     for i, task in enumerate(tasks):
         if task.task_id == task_id:
             deleted_task = tasks.pop(i)
+            update_stack_queue() #mise à jour de la file et de la pile
 
             return {"message": "Task deleted successfully", "deleted_task": deleted_task}
     raise HTTPException(status_code=404, detail="Task not found")

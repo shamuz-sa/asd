@@ -14,5 +14,7 @@ class Task(BaseModel):
 
 
 class Category(BaseModel):
+    category_id: int
     name: str
+    tasks: List[Task] = []
     subcategories: List[str] = []
