@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from models import Task
@@ -38,7 +39,7 @@ async def get_priority_queue():
     """
     elements = []
     while not priority_queue.empty():
-        elements.append(priority_queue.get()[1]) # pour add seulement l'objet task de la tuple
+        elements.append(priority_queue.get()[1])  # pour add seulement l'objet task de la tuple
 
     # return list(priority_queue.queue)
     return elements
@@ -101,28 +102,20 @@ async def get_tasks():
     return tasks
 
 
-@router.put("/up_tasks/{task_id}")
-async def update_task(task_id: int, updated_task: Task):
-    """ Mise à jour d'une tâche"""
-
-    if 0 <= task_id < len(tasks):
-        tasks[task_id] = updated_task
-        return {"message": "Task updated successfully"}
-    raise HTTPException(status_code=404, detail="Task not found")
-
-
 @router.put("/tasks/{task_id}")
 async def update_task(task_id: int, updated_task: Task):
     """ Mise à jour d'une tâche(meilleur version selon moi)"""
-    # Find the task by ID
-    for i, task in enumerate(tasks):
-        if task.task_id == task_id:
-            # Update the task in place
-            tasks[i] = updated_task
-            return {"message": "Task updated successfully"}
-
-    # Task not found
-    raise HTTPException(status_code=404, detail="Task not found")
+    task_dict = updated_task.dict()
+    matching_task = [task for task in tasks if task.task_id == task_id]
+    if matching_task:
+        task = matching_task[0]
+        task.title = task_dict["title"]
+        task.description = task_dict["description"]
+        task.due_date = task_dict["due_date"]
+        task.priority = task_dict["priority"]
+        return {"message": "Task updated successfully"}
+    else:
+        print(f"Task with {task_id}not found")
 
 
 @router.delete("/del_tasks/{task_id}")
@@ -133,7 +126,7 @@ async def delete_task(task_id: int):
     for i, task in enumerate(tasks):
         if task.task_id == task_id:
             deleted_task = tasks.pop(i)
-            update_stack_queue() #mise à jour de la file et de la pile
+            update_stack_queue()  # mise à jour de la file et de la pile
 
             return {"message": "Task deleted successfully", "deleted_task": deleted_task}
     raise HTTPException(status_code=404, detail="Task not found")
