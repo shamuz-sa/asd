@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from tasks import router as tasks_router
 from categories import router as categories_router
 
-app = FastAPI()
+app = FastAPI(debug=True)
 
 
 @app.get("/")

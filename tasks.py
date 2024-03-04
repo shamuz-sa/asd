@@ -1,4 +1,3 @@
-import json
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from models import Task
@@ -29,7 +28,13 @@ async def create_task(task: Task):
 
 
 def push_task_by_priority_queue(task: Task):
-    priority_queue.put((task.due_date, task))
+    try:
+        priority_queue.put((task.due_date, task))
+    except Exception as e:
+        print(f"Erreur lors de l'ajout à la file de priorité : {e}")
+
+    # print(type(task.due_date))
+    # print("la taille de la queue", priority_queue.qsize())
 
 
 @router.get("/tasks/priority_queue", response_model=List[Task])
@@ -42,6 +47,7 @@ async def get_priority_queue():
         elements.append(priority_queue.get()[1])  # pour add seulement l'objet task de la tuple
 
     # return list(priority_queue.queue)
+    print(f"les elements de la file sont : {elements}")
     return elements
 
 
@@ -104,7 +110,7 @@ async def get_tasks():
 
 @router.put("/tasks/{task_id}")
 async def update_task(task_id: int, updated_task: Task):
-    """ Mise à jour d'une tâche(meilleur version selon moi)"""
+    """ Mise à jour d'une tâche"""
     task_dict = updated_task.dict()
     matching_task = [task for task in tasks if task.task_id == task_id]
     if matching_task:

@@ -1,9 +1,9 @@
+from typing import List
+
 from fastapi import APIRouter
-from models import Category
+from models import Category, categories
 
 router = APIRouter()
-
-categories = {}
 
 
 @router.post("/categories/")
@@ -13,5 +13,5 @@ async def create_category(category: Category):
 
 
 @router.get("/categories/")
-async def get_categories():
+async def get_categories() -> list[Category]:
     return categories
