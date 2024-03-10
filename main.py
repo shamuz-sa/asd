@@ -5,9 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(debug=True)
 
+
+#Configuration CORS pour autoriser toutes les origines pendant le développement
 origins = [
-    "http://localhost:4200",  # Ajoutez vos origines autorisées ici
+    "http://localhost",
+    "http://localhost:4200",  # Ajoutez l'URL de votre application front-end
 ]
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -15,7 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
