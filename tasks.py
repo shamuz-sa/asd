@@ -1,3 +1,4 @@
+import uuid
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from models import Task
@@ -16,11 +17,12 @@ async def create_task(task: Task):
     """
     Creation d'une nouvelle tache
     """
-    global task_counter  # Utilisation de la variable globale task_counter
-
-    # Attribution d'un identifiant unique à la tâche
-    task.task_id = task_counter
-    task_counter += 1
+    # global task_counter  # Utilisation de la variable globale task_counter
+    #
+    # # Attribution d'un identifiant unique à la tâche
+    # task.task_id = task_counter
+    # task_counter += 1
+    task.task_id= str(uuid.uuid4())
     tasks.append(task)  # Ajout de la tâche à la liste des tâches
     push_task_by_priority_stack(task)  # par priorite
     push_task_by_priority_queue(task)  # par date proche en priorité

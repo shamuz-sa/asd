@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import date
 from typing import List
+import uuid
+
 
 from pydantic import BaseModel
 
@@ -9,7 +11,7 @@ categories: List[Category] = []
 
 
 class Task(BaseModel):
-    task_id: int
+    task_id: str # = str(uuid.uuid4())
     title: str
     description: str
     due_date: date
