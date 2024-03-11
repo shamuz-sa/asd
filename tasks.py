@@ -2,7 +2,7 @@ import uuid
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from models import Task
-from queue import LifoQueue, PriorityQueue
+from queue import LifoQueue, PriorityQueue, SimpleQueue
 
 router = APIRouter()
 
@@ -18,11 +18,11 @@ async def create_task(task: Task):
     Creation d'une nouvelle tache
     """
     # global task_counter  # Utilisation de la variable globale task_counter
-    #
-    # # Attribution d'un identifiant unique à la tâche
+
+    # Attribution d'un identifiant unique à la tâche
     # task.task_id = task_counter
     # task_counter += 1
-    task.task_id= str(uuid.uuid4())
+    task.task_id = str(uuid.uuid4())
     tasks.append(task)  # Ajout de la tâche à la liste des tâches
     push_task_by_priority_stack(task)  # par priorite
     push_task_by_priority_queue(task)  # par date proche en priorité
@@ -44,12 +44,33 @@ async def get_priority_queue():
     """
     Récupère les tâches organisées par date la plus proche
     """
+    # Crée une liste pour stocker temporairement les tâches
     elements = []
-    while not priority_queue.empty():
-        elements.append(priority_queue.get()[1])  # pour add seulement l'objet task de la tuple
 
-    # return list(priority_queue.queue)
-    print(f"les elements de la file sont : {elements}")
+    # Crée une copie temporaire de la file de priorité sans retirer les éléments
+    temp_queue = PriorityQueue()
+
+    # Parcours la file de priorité principale
+    while not priority_queue.empty():
+        # Récupère la date de fin et la tâche de la file de priorité principale
+        _, task = priority_queue.get()
+
+        # Ajoute la tâche à la copie temporaire et à la liste
+        temp_queue.put((task.due_date, task))
+        elements.append(task)
+
+    # Restaure la file de priorité principale avec les éléments copiés
+    while not temp_queue.empty():
+        # Récupère la date de fin et la tâche de la copie temporaire
+        _, task = temp_queue.get()
+
+        # Réinsère la tâche dans la file de priorité principale
+        priority_queue.put((task.due_date, task))
+
+    # Affiche les éléments sans les retirer de la file
+    print(f"Les éléments de la file sont : {elements}")
+
+    # Retourne la liste des tâches
     return elements
 
 

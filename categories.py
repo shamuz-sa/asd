@@ -1,7 +1,8 @@
 from typing import List
+import uuid
 
 import _asyncio
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -13,18 +14,13 @@ router = APIRouter()
 
 @router.post("/categories/")
 async def create_category(category: Category):
-    """
-    Crée une nouvelle catégorie et la stocke dans la liste des catégories.
-    Args: category (Category): La catégorie à créer.
-    Returns:Category: La catégorie créée.
-    Raises:ValueError: Si une catégorie avec le même nom existe déjà.
-    """
     # Vérifier si la catégorie existe déjà
-    if category.name in categories:
-        raise ValueError(f"Une catégorie nommée '{category.name}' existe déjà.")
+    if any(existing_category.name == category.name for existing_category in categories):
+        raise HTTPException(status_code=422, detail=f"Une catégorie nommée '{category.name}' existe déjà.")
 
     # Attribuer un identifiant unique à la catégorie
-    category.category_id = len(categories) + 1
+    category.category_id = str(uuid.uuid4())
+    category.tasks = []
 
     # Stocker la catégorie dans la liste des catégories
     categories.append(category)
