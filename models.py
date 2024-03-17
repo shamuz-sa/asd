@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import date
 from typing import List
 
@@ -30,12 +31,12 @@ class Task(BaseModel):
 
 class Category(BaseModel):
     # categ_counter: int = 1
-    category_id: int
+    category_id: str
     name: str
     tasks: List[Task]
-    subcategories: List["Category"]
+ #   subcategories: List["Category"]
 
-    def __init__(self, category_id: int, name: str, tasks: List[Task] = None, subcategories: List["Category"] = None):
+    def __init__(self, category_id: str, name: str, tasks: List[Task] = None, subcategories: List["Category"] = None):
         super().__init__(category_id=category_id, name=name, tasks=tasks or [],
                          subcategories=subcategories or [])
         # self.category_id = Category.categ_counter
@@ -80,7 +81,8 @@ def verify_category(self, category_name: str, categories: List[Category]):
         category = succes[0]
         category.tasks.append(self)
     else:
-        category_id = len(categories) + 1
+        # category_id = len(categories) + 1
+        category_id=str(uuid.uuid4())
         category = Category(category_id=category_id, name=category_name)
         category.tasks.append(self)
         categories.append(category)

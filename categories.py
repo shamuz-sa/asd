@@ -1,21 +1,21 @@
 from typing import List
 import uuid
 
-import _asyncio
 from fastapi import APIRouter, HTTPException
-from starlette.requests import Request
-from starlette.responses import JSONResponse
 
-from models import Category, categories, Task
-from tasks import tasks
+from models import Category
 
 router = APIRouter()
+
+# Assuming categories is a list where you store your categories
+list_category: List[Category] = []
 
 
 @router.post("/categories/")
 async def create_category(category: Category):
+    """Creation d'une nouvelle categorie"""
     # Vérifier si la catégorie existe déjà
-    if any(existing_category.name == category.name for existing_category in categories):
+    if any(existing_category.name == category.name for existing_category in list_category):
         raise HTTPException(status_code=422, detail=f"Une catégorie nommée '{category.name}' existe déjà.")
 
     # Attribuer un identifiant unique à la catégorie
@@ -23,8 +23,30 @@ async def create_category(category: Category):
     category.tasks = []
 
     # Stocker la catégorie dans la liste des catégories
-    categories.append(category)
+    list_category.append(category)
     return category
+
+
+@router.put("/categories/{name}", response_model=Category)
+async def update_category(name: str, category: Category):
+    """Mise a jour d'une categorie"""
+    for index, stored_category in enumerate(list_category):
+        if stored_category.name == name:
+            # Conserver l'identifiant de la catégorie
+            category.category_id = stored_category.category_id
+            list_category[index] = category
+            return category
+    raise HTTPException(status_code=404, detail="La catégorie spécifiée n'a pas été trouvée.")
+
+
+@router.delete("/categories/{name}")
+async def delete_category(name: str):
+    """Suppression d'une categorie"""
+    for index, stored_category in enumerate(list_category):
+        if stored_category.name == name:
+            del list_category[index]
+            return {"message": "Catégorie supprimée avec succès"}
+    raise HTTPException(status_code=404, detail="La catégorie spécifiée n'a pas été trouvée.")
 
 
 def create_subcategory(parent_category: Category, subcategory_name: str):
@@ -51,4 +73,4 @@ def create_subcategory(parent_category: Category, subcategory_name: str):
 
 @router.get("/categories/")
 async def get_categories() -> list[Category]:
-    return categories
+    return list_category

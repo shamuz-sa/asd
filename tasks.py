@@ -132,12 +132,13 @@ async def get_tasks():
 
 
 @router.put("/tasks/{task_id}")
-async def update_task(task_id: int, updated_task: Task):
+async def update_task(task_id: str, updated_task: Task):
     """ Mise à jour d'une tâche"""
     task_dict = updated_task.dict()
     matching_task = [task for task in tasks if task.task_id == task_id]
     if matching_task:
         task = matching_task[0]
+     #   task.task_id = task_dict["task_id"]
         task.title = task_dict["title"]
         task.description = task_dict["description"]
         task.due_date = task_dict["due_date"]
